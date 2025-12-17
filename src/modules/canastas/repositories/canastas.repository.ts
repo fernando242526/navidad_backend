@@ -1,35 +1,58 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Like } from 'typeorm';
+import {
+  Repository,
+  FindOptionsWhere,
+  Like,
+  EntityManager,
+} from 'typeorm';
 import { Canasta } from '../entities/canasta.entity';
 
 @Injectable()
 export class CanastasRepository {
   constructor(
     @InjectRepository(Canasta)
-    private readonly canastaRepository: Repository<Canasta>,
+    private readonly repository: Repository<Canasta>,
   ) {}
 
-  async create(createData: Partial<Canasta>): Promise<Canasta> {
-    const canasta = this.canastaRepository.create(createData);
-    return await this.canastaRepository.save(canasta);
+  // =========================
+  // CREATE
+  // =========================
+  async create(
+    createData: Partial<Canasta>,
+    manager?: EntityManager,
+  ): Promise<Canasta> {
+    const repo = manager
+      ? manager.getRepository(Canasta)
+      : this.repository;
+
+    const canasta = repo.create(createData);
+    return repo.save(canasta);
   }
 
+  // =========================
+  // FIND ALL (PAGINADO)
+  // =========================
   async findAll(
-    page: number = 1,
-    limit: number = 10,
+    page = 1,
+    limit = 10,
     search?: string,
+    manager?: EntityManager,
   ): Promise<{ canastas: Canasta[]; total: number }> {
+    const repo = manager
+      ? manager.getRepository(Canasta)
+      : this.repository;
+
     const validatedPage = page > 0 ? page : 1;
     const validatedLimit = limit > 0 ? limit : 10;
 
     const whereConditions: FindOptionsWhere<Canasta> = {};
 
-    if (search !== undefined && search.trim() !== '') {
+    if (search?.trim()) {
       whereConditions.codigoQr = Like(`%${search.trim()}%`);
     }
 
-    const [canastas, total] = await this.canastaRepository.findAndCount({
+    const [canastas, total] = await repo.findAndCount({
       where: whereConditions,
       skip: (validatedPage - 1) * validatedLimit,
       take: validatedLimit,
@@ -39,44 +62,80 @@ export class CanastasRepository {
     return { canastas, total };
   }
 
-  async findOne(id: string): Promise<Canasta | null> {
-    if (!id) {
-      return null;
-    }
+  // =========================
+  // FIND ONE
+  // =========================
+  async findOne(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<Canasta | null> {
+    if (!id) return null;
 
-    return await this.canastaRepository.findOne({
-      where: { id },
-    });
+    const repo = manager
+      ? manager.getRepository(Canasta)
+      : this.repository;
+
+    return repo.findOne({ where: { id } });
   }
 
-  async findByCodigoQr(codigoQr: string): Promise<Canasta | null> {
-    if (!codigoQr) {
-      return null;
-    }
+  // =========================
+  // FIND BY QR
+  // =========================
+  async findByCodigoQr(
+    codigoQr: string,
+    manager?: EntityManager,
+  ): Promise<Canasta | null> {
+    if (!codigoQr) return null;
 
-    return await this.canastaRepository.findOne({
-      where: { codigoQr },
-    });
+    const repo = manager
+      ? manager.getRepository(Canasta)
+      : this.repository;
+
+    return repo.findOne({ where: { codigoQr } });
   }
 
-  async update(id: string, updateData: Partial<Canasta>): Promise<Canasta | null> {
-    if (!id) {
-      return null;
-    }
+  // =========================
+  // UPDATE
+  // =========================
+  async update(
+    id: string,
+    updateData: Partial<Canasta>,
+    manager?: EntityManager,
+  ): Promise<Canasta | null> {
+    if (!id) return null;
 
-    await this.canastaRepository.update(id, updateData);
-    return await this.findOne(id);
+    const repo = manager
+      ? manager.getRepository(Canasta)
+      : this.repository;
+
+    await repo.update(id, updateData);
+    return repo.findOne({ where: { id } });
   }
 
-  async remove(id: string): Promise<void> {
-    if (!id) {
-      return;
-    }
+  // =========================
+  // DELETE
+  // =========================
+  async remove(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<void> {
+    if (!id) return;
 
-    await this.canastaRepository.delete(id);
+    const repo = manager
+      ? manager.getRepository(Canasta)
+      : this.repository;
+
+    await repo.delete(id);
   }
 
-  async count(): Promise<number> {
-    return await this.canastaRepository.count();
+  // =========================
+  // COUNT
+  // =========================
+  async count(manager?: EntityManager): Promise<number> {
+    const repo = manager
+      ? manager.getRepository(Canasta)
+      : this.repository;
+
+    return repo.count();
   }
 }

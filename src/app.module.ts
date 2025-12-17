@@ -15,6 +15,7 @@ import { RegalosModule } from './modules/regalos/regalos.module';
 import { TrabajadorRegalosModule } from './modules/trabajador-regalos/trabajador-regalos.module';
 import { LogsModule } from './modules/logs/logs.module';
 import { FlujoModule } from './modules/flujo/flujo.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
@@ -22,11 +23,13 @@ import { FlujoModule } from './modules/flujo/flujo.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    DatabaseModule,
     UsersModule, 
     AuthModule, TrabajadoresModule, CanastasModule, RegalosModule, TrabajadorRegalosModule, LogsModule, FlujoModule
   ],
   controllers: [AppController],
   providers: [
+    AppService,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({

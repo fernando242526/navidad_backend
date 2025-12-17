@@ -1,28 +1,56 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Like } from 'typeorm';
-import { Trabajador, EstadoCanasta, EstadoRegalos, AuditorioCanasta } from '../entities/trabajador.entity';
+import {
+  Repository,
+  FindOptionsWhere,
+  Like,
+  EntityManager,
+} from 'typeorm';
+import {
+  Trabajador,
+  EstadoCanasta,
+  EstadoRegalos,
+  AuditorioCanasta,
+} from '../entities/trabajador.entity';
 
 @Injectable()
 export class TrabajadoresRepository {
   constructor(
     @InjectRepository(Trabajador)
-    private readonly trabajadorRepository: Repository<Trabajador>,
+    private readonly repository: Repository<Trabajador>,
   ) {}
 
-  async create(createData: Partial<Trabajador>): Promise<Trabajador> {
-    const trabajador = this.trabajadorRepository.create(createData);
-    return await this.trabajadorRepository.save(trabajador);
+  // =========================
+  // CREATE
+  // =========================
+  async create(
+    createData: Partial<Trabajador>,
+    manager?: EntityManager,
+  ): Promise<Trabajador> {
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    const trabajador = repo.create(createData);
+    return repo.save(trabajador);
   }
 
+  // =========================
+  // FIND ALL (PAGINADO)
+  // =========================
   async findAll(
-    page: number = 1,
-    limit: number = 10,
+    page = 1,
+    limit = 10,
     estadoCanasta?: EstadoCanasta,
     estadoRegalos?: EstadoRegalos,
     auditorioCanasta?: AuditorioCanasta,
     search?: string,
+    manager?: EntityManager,
   ): Promise<{ trabajadores: Trabajador[]; total: number }> {
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
     const validatedPage = page > 0 ? page : 1;
     const validatedLimit = limit > 0 ? limit : 10;
 
@@ -40,11 +68,11 @@ export class TrabajadoresRepository {
       whereConditions.auditorioCanasta = auditorioCanasta;
     }
 
-    if (search !== undefined && search.trim() !== '') {
+    if (search?.trim()) {
       whereConditions.nombresCompletos = Like(`%${search.trim()}%`);
     }
 
-    const [trabajadores, total] = await this.trabajadorRepository.findAndCount({
+    const [trabajadores, total] = await repo.findAndCount({
       where: whereConditions,
       skip: (validatedPage - 1) * validatedLimit,
       take: validatedLimit,
@@ -54,52 +82,102 @@ export class TrabajadoresRepository {
     return { trabajadores, total };
   }
 
-  async findOne(id: string): Promise<Trabajador | null> {
-    if (!id) {
-      return null;
-    }
+  // =========================
+  // FIND ONE
+  // =========================
+  async findOne(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<Trabajador | null> {
+    if (!id) return null;
 
-    return await this.trabajadorRepository.findOne({
-      where: { id },
-    });
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    return repo.findOne({ where: { id } });
   }
 
-  async findByDni(dni: string): Promise<Trabajador | null> {
-    if (!dni) {
-      return null;
-    }
+  // =========================
+  // FIND BY DNI
+  // =========================
+  async findByDni(
+    dni: string,
+    manager?: EntityManager,
+  ): Promise<Trabajador | null> {
+    if (!dni) return null;
 
-    return await this.trabajadorRepository.findOne({
-      where: { dni },
-    });
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    return repo.findOne({ where: { dni } });
   }
 
-  async update(id: string, updateData: Partial<Trabajador>): Promise<Trabajador | null> {
-    if (!id) {
-      return null;
-    }
+  // =========================
+  // UPDATE
+  // =========================
+  async update(
+    id: string,
+    updateData: Partial<Trabajador>,
+    manager?: EntityManager,
+  ): Promise<Trabajador | null> {
+    if (!id) return null;
 
-    await this.trabajadorRepository.update(id, updateData);
-    return await this.findOne(id);
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    await repo.update(id, updateData);
+    return repo.findOne({ where: { id } });
   }
 
-  async remove(id: string): Promise<void> {
-    if (!id) {
-      return;
-    }
+  // =========================
+  // DELETE
+  // =========================
+  async remove(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<void> {
+    if (!id) return;
 
-    await this.trabajadorRepository.delete(id);
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    await repo.delete(id);
   }
 
-  async count(): Promise<number> {
-    return await this.trabajadorRepository.count();
+  // =========================
+  // COUNTS
+  // =========================
+  async count(manager?: EntityManager): Promise<number> {
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    return repo.count();
   }
 
-  async countByEstadoCanasta(estadoCanasta: EstadoCanasta): Promise<number> {
-    return await this.trabajadorRepository.count({ where: { estadoCanasta } });
+  async countByEstadoCanasta(
+    estadoCanasta: EstadoCanasta,
+    manager?: EntityManager,
+  ): Promise<number> {
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    return repo.count({ where: { estadoCanasta } });
   }
 
-  async countByEstadoRegalos(estadoRegalos: EstadoRegalos): Promise<number> {
-    return await this.trabajadorRepository.count({ where: { estadoRegalos } });
+  async countByEstadoRegalos(
+    estadoRegalos: EstadoRegalos,
+    manager?: EntityManager,
+  ): Promise<number> {
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    return repo.count({ where: { estadoRegalos } });
   }
 }

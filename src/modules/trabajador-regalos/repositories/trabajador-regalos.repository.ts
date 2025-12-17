@@ -1,45 +1,78 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import {
+  Repository,
+  FindOptionsWhere,
+  EntityManager,
+} from 'typeorm';
 import { TrabajadorRegalo } from '../entities/trabajador-regalo.entity';
 
 @Injectable()
 export class TrabajadorRegalosRepository {
   constructor(
     @InjectRepository(TrabajadorRegalo)
-    private readonly trabajadorRegaloRepository: Repository<TrabajadorRegalo>,
+    private readonly repository: Repository<TrabajadorRegalo>,
   ) {}
 
-  async create(createData: Partial<TrabajadorRegalo>): Promise<TrabajadorRegalo> {
-    const trabajadorRegalo = this.trabajadorRegaloRepository.create(createData);
-    return await this.trabajadorRegaloRepository.save(trabajadorRegalo);
+  // =========================
+  // CREATE
+  // =========================
+  async create(
+    createData: Partial<TrabajadorRegalo>,
+    manager?: EntityManager,
+  ): Promise<TrabajadorRegalo> {
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    const trabajadorRegalo = repo.create(createData);
+    return repo.save(trabajadorRegalo);
   }
 
-  async createMany(createDataArray: Partial<TrabajadorRegalo>[]): Promise<TrabajadorRegalo[]> {
-    const trabajadorRegalos = this.trabajadorRegaloRepository.create(createDataArray);
-    return await this.trabajadorRegaloRepository.save(trabajadorRegalos);
+  async createMany(
+    createDataArray: Partial<TrabajadorRegalo>[],
+    manager?: EntityManager,
+  ): Promise<TrabajadorRegalo[]> {
+    if (!createDataArray || createDataArray.length === 0) {
+      return [];
+    }
+
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    const trabajadorRegalos = repo.create(createDataArray);
+    return repo.save(trabajadorRegalos);
   }
 
+  // =========================
+  // FIND ALL (PAGINADO)
+  // =========================
   async findAll(
-    page: number = 1,
-    limit: number = 10,
+    page = 1,
+    limit = 10,
     idTrabajador?: string,
     idRegalo?: string,
+    manager?: EntityManager,
   ): Promise<{ trabajadorRegalos: TrabajadorRegalo[]; total: number }> {
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
     const validatedPage = page > 0 ? page : 1;
     const validatedLimit = limit > 0 ? limit : 10;
 
     const whereConditions: FindOptionsWhere<TrabajadorRegalo> = {};
 
-    if (idTrabajador !== undefined) {
+    if (idTrabajador) {
       whereConditions.idTrabajador = idTrabajador;
     }
 
-    if (idRegalo !== undefined) {
+    if (idRegalo) {
       whereConditions.idRegalo = idRegalo;
     }
 
-    const [trabajadorRegalos, total] = await this.trabajadorRegaloRepository.findAndCount({
+    const [trabajadorRegalos, total] = await repo.findAndCount({
       where: whereConditions,
       relations: ['trabajador', 'regalo'],
       skip: (validatedPage - 1) * validatedLimit,
@@ -50,66 +83,115 @@ export class TrabajadorRegalosRepository {
     return { trabajadorRegalos, total };
   }
 
-  async findOne(id: string): Promise<TrabajadorRegalo | null> {
-    if (!id) {
-      return null;
-    }
+  // =========================
+  // FIND ONE
+  // =========================
+  async findOne(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<TrabajadorRegalo | null> {
+    if (!id) return null;
 
-    return await this.trabajadorRegaloRepository.findOne({
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    return repo.findOne({
       where: { id },
       relations: ['trabajador', 'regalo'],
     });
   }
 
-  async findByTrabajadorId(idTrabajador: string): Promise<TrabajadorRegalo[]> {
-    if (!idTrabajador) {
-      return [];
-    }
+  // =========================
+  // FIND BY TRABAJADOR
+  // =========================
+  async findByTrabajadorId(
+    idTrabajador: string,
+    manager?: EntityManager,
+  ): Promise<TrabajadorRegalo[]> {
+    if (!idTrabajador) return [];
 
-    return await this.trabajadorRegaloRepository.find({
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    return repo.find({
       where: { idTrabajador },
       relations: ['regalo'],
       order: { createdAt: 'ASC' },
     });
   }
 
-  async findByRegaloId(idRegalo: string): Promise<TrabajadorRegalo[]> {
-    if (!idRegalo) {
-      return [];
-    }
+  // =========================
+  // FIND BY REGALO
+  // =========================
+  async findByRegaloId(
+    idRegalo: string,
+    manager?: EntityManager,
+  ): Promise<TrabajadorRegalo[]> {
+    if (!idRegalo) return [];
 
-    return await this.trabajadorRegaloRepository.find({
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    return repo.find({
       where: { idRegalo },
       relations: ['trabajador'],
       order: { createdAt: 'ASC' },
     });
   }
 
-  async remove(id: string): Promise<void> {
-    if (!id) {
-      return;
-    }
+  // =========================
+  // DELETE
+  // =========================
+  async remove(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<void> {
+    if (!id) return;
 
-    await this.trabajadorRegaloRepository.delete(id);
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    await repo.delete(id);
   }
 
-  async removeByTrabajadorId(idTrabajador: string): Promise<void> {
-    if (!idTrabajador) {
-      return;
-    }
+  async removeByTrabajadorId(
+    idTrabajador: string,
+    manager?: EntityManager,
+  ): Promise<void> {
+    if (!idTrabajador) return;
 
-    await this.trabajadorRegaloRepository.delete({ idTrabajador });
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    await repo.delete({ idTrabajador });
   }
 
-  async count(): Promise<number> {
-    return await this.trabajadorRegaloRepository.count();
+  // =========================
+  // COUNTS
+  // =========================
+  async count(manager?: EntityManager): Promise<number> {
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    return repo.count();
   }
 
-  async countByTrabajadorId(idTrabajador: string): Promise<number> {
-    if (!idTrabajador) {
-      return 0;
-    }
+  async countByTrabajadorId(
+    idTrabajador: string,
+    manager?: EntityManager,
+  ): Promise<number> {
+    if (!idTrabajador) return 0;
 
-    return await this.trabajadorRegaloRepository.count({ where: { idTrabajador } });
+    const repo = manager
+      ? manager.getRepository(TrabajadorRegalo)
+      : this.repository;
+
+    return repo.count({ where: { idTrabajador } });
   }
 }

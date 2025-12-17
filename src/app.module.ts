@@ -12,7 +12,9 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { TrabajadoresModule } from './modules/trabajadores/trabajadores.module';
 import { CanastasModule } from './modules/canastas/canastas.module';
 import { RegalosModule } from './modules/regalos/regalos.module';
-import { TrabajadorRegalosModule } from './modules/trabajador-regalo/trabajador-regalos.module';
+import { TrabajadorRegalosModule } from './modules/trabajador-regalos/trabajador-regalos.module';
+import { LogsModule } from './modules/logs/logs.module';
+import { FlujoModule } from './modules/flujo/flujo.module';
 
 @Module({
   imports: [
@@ -21,7 +23,7 @@ import { TrabajadorRegalosModule } from './modules/trabajador-regalo/trabajador-
       envFilePath: '.env',
     }),
     UsersModule, 
-    AuthModule, TrabajadoresModule, CanastasModule, RegalosModule, TrabajadorRegalosModule
+    AuthModule, TrabajadoresModule, CanastasModule, RegalosModule, TrabajadorRegalosModule, LogsModule, FlujoModule
   ],
   controllers: [AppController],
   providers: [

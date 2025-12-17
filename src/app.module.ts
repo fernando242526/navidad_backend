@@ -10,6 +10,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { TrabajadoresModule } from './modules/trabajadores/trabajadores.module';
+import { CanastasModule } from './modules/canastas/canastas.module';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { TrabajadoresModule } from './modules/trabajadores/trabajadores.module';
       envFilePath: '.env',
     }),
     UsersModule, 
-    AuthModule, TrabajadoresModule
+    AuthModule, TrabajadoresModule, CanastasModule
   ],
   controllers: [AppController],
   providers: [

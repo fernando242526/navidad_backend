@@ -11,6 +11,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { TrabajadoresModule } from './modules/trabajadores/trabajadores.module';
 import { CanastasModule } from './modules/canastas/canastas.module';
+import { RegalosModule } from './modules/regalos/regalos.module';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { CanastasModule } from './modules/canastas/canastas.module';
       envFilePath: '.env',
     }),
     UsersModule, 
-    AuthModule, TrabajadoresModule, CanastasModule
+    AuthModule, TrabajadoresModule, CanastasModule, RegalosModule
   ],
   controllers: [AppController],
   providers: [

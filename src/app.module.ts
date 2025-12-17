@@ -9,6 +9,7 @@ import { JwtAuthGuard } from './common/guards/auth.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { TrabajadoresModule } from './modules/trabajadores/trabajadores.module';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
       envFilePath: '.env',
     }),
     UsersModule, 
-    AuthModule
+    AuthModule, TrabajadoresModule
   ],
   controllers: [AppController],
   providers: [

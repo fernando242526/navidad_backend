@@ -125,6 +125,19 @@ export class AuthController {
     return new BaseResponseDto(user, 'Session is valid');
   }
 
+  /**
+   * 🔥 CONFIGURACIÓN CRÍTICA PARA COOKIES CROSS-DOMAIN
+   * 
+   * Cuando frontend y backend están en dominios diferentes:
+   * - Backend: https://tu-api.onrender.com
+   * - Frontend: https://tu-app.vercel.app
+   * 
+   * Es OBLIGATORIO usar:
+   * - sameSite: 'none' (permite envío cross-domain)
+   * - secure: true (requiere HTTPS)
+   * - httpOnly: true (seguridad)
+   * - path: '/' (disponible en todas las rutas)
+   */
   private setAuthCookies(
     response: Response,
     accessToken: string,
@@ -132,25 +145,38 @@ export class AuthController {
   ): void {
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // Cookie para access token
+    // Configuración base de cookies
+    const cookieConfig = {
+      httpOnly: true, // No accesible desde JavaScript (seguridad XSS)
+      secure: isProduction, // Solo HTTPS en producción
+      sameSite: isProduction ? ('none' as const) : ('lax' as const), // 'none' permite cross-domain
+      path: '/', // Disponible en todas las rutas
+    };
+
+    // Cookie para access token (24 horas)
     response.cookie(APP_CONSTANTS.JWT.ACCESS_TOKEN_COOKIE, accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'strict' : 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 24 horas
+      ...cookieConfig,
+      maxAge: 24 * 60 * 60 * 1000, // 24 horas en milisegundos
     });
 
-    // Cookie para refresh token
+    // Cookie para refresh token (7 días)
     response.cookie(APP_CONSTANTS.JWT.REFRESH_TOKEN_COOKIE, refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'strict' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+      ...cookieConfig,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días en milisegundos
     });
   }
 
   private clearAuthCookies(response: Response): void {
-    response.clearCookie(APP_CONSTANTS.JWT.ACCESS_TOKEN_COOKIE);
-    response.clearCookie(APP_CONSTANTS.JWT.REFRESH_TOKEN_COOKIE);
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    const cookieConfig = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('none' as const) : ('lax' as const),
+      path: '/',
+    };
+
+    response.clearCookie(APP_CONSTANTS.JWT.ACCESS_TOKEN_COOKIE, cookieConfig);
+    response.clearCookie(APP_CONSTANTS.JWT.REFRESH_TOKEN_COOKIE, cookieConfig);
   }
 }

@@ -1,12 +1,12 @@
 import { ConfigService } from '@nestjs/config';
 
 export const getAppConfig = (configService: ConfigService) => {
-  const corsOriginEnv = configService.get<string>('CORS_ORIGIN', 'http://localhost:4200');
+  const corsOriginEnv = configService.get<string>('CORS_ORIGIN', 'https://elpedregal-navidad.netlify.app');
 
   // Array de orígenes permitidos
   const corsOrigin = [
     corsOriginEnv, // Tu valor configurado (ej: https://elpedregal.com)
-    'http://localhost:4200', // Angular dev
+    'https://elpedregal-navidad.netlify.app', // Angular dev
     'http://localhost:3000', // Otro posible puerto
     /^https?:\/\/localhost(:\d+)?$/, // Cualquier localhost con puerto
   ];

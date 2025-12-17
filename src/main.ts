@@ -27,6 +27,7 @@ async function bootstrap() {
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       optionsSuccessStatus: 200,
     });
+    
     // Cookie parser
     app.use(cookieParser(appConfig.cookieSecret));
 
@@ -35,22 +36,36 @@ async function bootstrap() {
       setupSwagger(app);
     }
 
-    // 🌱 Ejecutar seeds automáticamente
-    logger.log('🌱 Running database seeds...');
-    const seedService = app.get(DatabaseSeedService);
+    // 🌱 Ejecutar seeds SOLO en desarrollo
+    if (appConfig.nodeEnv !== 'production') {
+      try {
+        logger.log('🌱 Running database seeds (development only)...');
+        const seedService = app.get(DatabaseSeedService);
+        await seedService.runSeeds();
+      } catch (seedError) {
+        logger.warn('⚠️  Seed execution failed (this is normal if data already exists)');
+        if (seedError instanceof Error) {
+          logger.debug(`Seed detail: ${seedError.message}`);
+        }
+      }
+    } else {
+      logger.log('🏭 Production mode: Seeds skipped. Admin created via migration.');
+    }
 
-    await seedService.runSeeds();
     await app.listen(appConfig.port);
     logger.log(`🚀 Application is running on: http://localhost:${appConfig.port}/${appConfig.apiPrefix}`);
+    
     if (appConfig.nodeEnv !== 'production') {
       logger.log(`📚 Swagger documentation: http://localhost:${appConfig.port}/api/docs`);
     }
 
     logger.log('🏢 El Pedregal - Sistema ERP Backend');
-    logger.log('🎯 Default Admin Credentials:');
-    logger.log('📧 Email: admin@elpedregal.com');
-    logger.log('🔑 Password: Admin123!');
-    logger.log('⚠️  Change password after first login!');
+    logger.log(`🌍 Environment: ${appConfig.nodeEnv}`);
+    
+    if (appConfig.nodeEnv === 'production') {
+      logger.log('🔐 Admin credentials are set via environment variables');
+      logger.log('📧 DEFAULT_ADMIN_EMAIL and 🔑 DEFAULT_ADMIN_PASSWORD');
+    }
   } catch (error: unknown) {
     if (error instanceof Error) {
       logger.error(`❌ Failed to start application: ${error.message}`);

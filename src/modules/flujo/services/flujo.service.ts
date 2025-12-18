@@ -121,50 +121,68 @@ export class FlujoService {
         throw new NotFoundException('Trabajador no encontrado');
       }
 
-      // Validar estado actual
-      if (trabajador.estadoCanasta === EstadoCanasta.AUDITORIO_INGRESADO) {
-        await queryRunner.rollbackTransaction();
-        return {
-          message: 'El trabajador ya ingresó al auditorio de canastas',
-          trabajador: new TrabajadorResponseDto(trabajador),
-        };
-      }
-
+      // ✅ CASO 1: Ya recibió su canasta - NO PERMITIR INGRESO
       if (trabajador.estadoCanasta === EstadoCanasta.CANASTA_ENTREGADA) {
         await queryRunner.rollbackTransaction();
         return {
-          message: 'El trabajador ya recibió su canasta',
+          message: 'El trabajador ya recibió su canasta y no puede ingresar nuevamente',
           trabajador: new TrabajadorResponseDto(trabajador),
         };
       }
 
-      // Validar que pasó por ventanilla
-      if (trabajador.estadoCanasta !== EstadoCanasta.VENTANILLA_ESCANEADO) {
+      // ✅ CASO 2: Ya ingresó al auditorio - PERMITIR INGRESO (sin cambiar estado)
+      if (trabajador.estadoCanasta === EstadoCanasta.AUDITORIO_INGRESADO) {
+        // Guardar log pero no cambiar estado
+        await this.logsRepository.create({
+          idTrabajador: trabajador.id,
+          idUsuario,
+          peticionHecha: `PATCH /flujo/seguridad-canasta/ingreso - DNI: ${dni} (RE-INGRESO)`,
+          fechaHora: new Date(),
+        });
+
+        await queryRunner.commitTransaction();
+
+        return {
+          message: 'Ingreso permitido - El trabajador ya estaba registrado en el auditorio',
+          trabajador: new TrabajadorResponseDto(trabajador),
+        };
+      }
+
+      // ✅ CASO 3: Viene de ventanilla - PERMITIR INGRESO Y CAMBIAR ESTADO
+      if (trabajador.estadoCanasta === EstadoCanasta.VENTANILLA_ESCANEADO) {
+        // Actualizar estado a AUDITORIO_INGRESADO
+        const trabajadorActualizado = await this.trabajadoresRepository.update(trabajador.id, {
+          estadoCanasta: EstadoCanasta.AUDITORIO_INGRESADO,
+        });
+
+        // Guardar log
+        await this.logsRepository.create({
+          idTrabajador: trabajador.id,
+          idUsuario,
+          peticionHecha: `PATCH /flujo/seguridad-canasta/ingreso - DNI: ${dni}`,
+          fechaHora: new Date(),
+        });
+
+        await queryRunner.commitTransaction();
+
+        return {
+          message: 'Ingreso al auditorio de canastas registrado exitosamente',
+          trabajador: new TrabajadorResponseDto(trabajadorActualizado!),
+        };
+      }
+
+      // ✅ CASO 4: No pasó por ventanilla - NO PERMITIR INGRESO
+      if (trabajador.estadoCanasta === EstadoCanasta.PENDIENTE) {
         await queryRunner.rollbackTransaction();
         throw new BadRequestException(
           `El trabajador debe pasar primero por ventanilla. Estado actual: ${trabajador.estadoCanasta}`,
         );
       }
 
-      // Actualizar estado solo de canasta
-      const trabajadorActualizado = await this.trabajadoresRepository.update(trabajador.id, {
-        estadoCanasta: EstadoCanasta.AUDITORIO_INGRESADO,
-      });
-
-      // Guardar log
-      await this.logsRepository.create({
-        idTrabajador: trabajador.id,
-        idUsuario,
-        peticionHecha: `PATCH /flujo/seguridad-canasta/ingreso - DNI: ${dni}`,
-        fechaHora: new Date(),
-      });
-
-      await queryRunner.commitTransaction();
-
-      return {
-        message: 'Ingreso al auditorio de canastas registrado exitosamente',
-        trabajador: new TrabajadorResponseDto(trabajadorActualizado!),
-      };
+      // ❌ CASO DEFAULT: Estado no reconocido
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(`Estado de canasta no reconocido: ${trabajador.estadoCanasta}`);
+      
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -193,56 +211,74 @@ export class FlujoService {
         throw new NotFoundException('Trabajador no encontrado');
       }
 
-      // Validar que tiene asignado auditorio de juguetes
+      // ✅ VALIDACIÓN 1: Verificar que tiene asignado auditorio de juguetes
       if (!trabajador.auditorioJuguetes) {
         await queryRunner.rollbackTransaction();
         throw new BadRequestException('El trabajador no tiene asignado recepción de juguetes');
       }
 
-      // Validar estado actual
-      if (trabajador.estadoRegalos === EstadoRegalos.AUDITORIO_INGRESADO) {
-        await queryRunner.rollbackTransaction();
-        return {
-          message: 'El trabajador ya ingresó al auditorio de regalos',
-          trabajador: new TrabajadorResponseDto(trabajador),
-        };
-      }
-
+      // ✅ CASO 1: Ya recibió sus juguetes - NO PERMITIR INGRESO
       if (trabajador.estadoRegalos === EstadoRegalos.JUGUETES_ENTREGADOS) {
         await queryRunner.rollbackTransaction();
         return {
-          message: 'El trabajador ya recibió sus juguetes',
+          message: 'El trabajador ya recibió sus juguetes y no puede ingresar nuevamente',
           trabajador: new TrabajadorResponseDto(trabajador),
         };
       }
 
-      // Validar que pasó por ventanilla
-      if (trabajador.estadoRegalos !== EstadoRegalos.VENTANILLA_ESCANEADO) {
+      // ✅ CASO 2: Ya ingresó al auditorio - PERMITIR INGRESO (sin cambiar estado)
+      if (trabajador.estadoRegalos === EstadoRegalos.AUDITORIO_INGRESADO) {
+        // Guardar log pero no cambiar estado
+        await this.logsRepository.create({
+          idTrabajador: trabajador.id,
+          idUsuario,
+          peticionHecha: `PATCH /flujo/seguridad-regalos/ingreso - DNI: ${dni} (RE-INGRESO)`,
+          fechaHora: new Date(),
+        });
+
+        await queryRunner.commitTransaction();
+
+        return {
+          message: 'Ingreso permitido - El trabajador ya estaba registrado en el auditorio',
+          trabajador: new TrabajadorResponseDto(trabajador),
+        };
+      }
+
+      // ✅ CASO 3: Viene de ventanilla - PERMITIR INGRESO Y CAMBIAR ESTADO
+      if (trabajador.estadoRegalos === EstadoRegalos.VENTANILLA_ESCANEADO) {
+        // Actualizar estado a AUDITORIO_INGRESADO
+        const trabajadorActualizado = await this.trabajadoresRepository.update(trabajador.id, {
+          estadoRegalos: EstadoRegalos.AUDITORIO_INGRESADO,
+        });
+
+        // Guardar log
+        await this.logsRepository.create({
+          idTrabajador: trabajador.id,
+          idUsuario,
+          peticionHecha: `PATCH /flujo/seguridad-regalos/ingreso - DNI: ${dni}`,
+          fechaHora: new Date(),
+        });
+
+        await queryRunner.commitTransaction();
+
+        return {
+          message: 'Ingreso al auditorio de regalos registrado exitosamente',
+          trabajador: new TrabajadorResponseDto(trabajadorActualizado!),
+        };
+      }
+
+      // ✅ CASO 4: No pasó por ventanilla - NO PERMITIR INGRESO
+      if (trabajador.estadoRegalos === EstadoRegalos.PENDIENTE) {
         await queryRunner.rollbackTransaction();
         throw new BadRequestException(
           `El trabajador debe pasar primero por ventanilla. Estado actual: ${trabajador.estadoRegalos}`,
         );
       }
 
-      // Actualizar estado solo de regalos
-      const trabajadorActualizado = await this.trabajadoresRepository.update(trabajador.id, {
-        estadoRegalos: EstadoRegalos.AUDITORIO_INGRESADO,
-      });
-
-      // Guardar log
-      await this.logsRepository.create({
-        idTrabajador: trabajador.id,
-        idUsuario,
-        peticionHecha: `PATCH /flujo/seguridad-regalos/ingreso - DNI: ${dni}`,
-        fechaHora: new Date(),
-      });
-
-      await queryRunner.commitTransaction();
-
-      return {
-        message: 'Ingreso al auditorio de regalos registrado exitosamente',
-        trabajador: new TrabajadorResponseDto(trabajadorActualizado!),
-      };
+      // ❌ CASO DEFAULT: Estado no reconocido
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(`Estado de regalos no reconocido: ${trabajador.estadoRegalos}`);
+      
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -254,6 +290,8 @@ export class FlujoService {
   // ========================================
   // ENCARGADO_ENTREGA_CANASTA
   // ========================================
+
+  // AGRRGAR DNI LECTUR DE CODIGO DE BARRAS, CONTEO POR PERSONA DE 1++, POR USUARIO Y CADA QUE REGISTRA, 
 
   async validarCanasta(
     validarCanastaDto: ValidarCanastaDto,

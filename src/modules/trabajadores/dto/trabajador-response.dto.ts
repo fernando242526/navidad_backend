@@ -14,11 +14,11 @@ export class TrabajadorResponseDto {
   @ApiProperty()
   fechaIngreso: Date;
 
-  @ApiProperty()
-  funcion: string;
+  @ApiPropertyOptional({ nullable: true })
+  funcion: string | null;
 
-  @ApiProperty()
-  tipoCanasta: string;
+  @ApiPropertyOptional({ nullable: true })
+  tipoCanasta: string | null;
 
   @ApiProperty({ enum: EstadoCanasta })
   estadoCanasta: EstadoCanasta;

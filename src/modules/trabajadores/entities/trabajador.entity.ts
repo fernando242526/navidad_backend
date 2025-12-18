@@ -36,11 +36,11 @@ export class Trabajador extends BaseEntity {
   @Column({ type: 'date', name: 'fecha_ingreso' })
   fechaIngreso: Date;
 
-  @Column({ type: 'varchar', length: 100 })
-  funcion: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  funcion: string | null;
 
-  @Column({ type: 'varchar', length: 50, name: 'tipo_canasta' })
-  tipoCanasta: string;
+  @Column({ type: 'varchar', length: 50, name: 'tipo_canasta', nullable: true })
+  tipoCanasta: string | null;
 
   @Column({
     type: 'enum',

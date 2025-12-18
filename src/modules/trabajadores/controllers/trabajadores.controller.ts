@@ -11,7 +11,10 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { TrabajadoresService } from '../services/trabajadores.service';
 import { CreateTrabajadorDto } from '../dto/create-trabajador.dto';
 import { UpdateTrabajadorDto } from '../dto/update-trabajador.dto';
@@ -123,5 +126,25 @@ export class TrabajadoresController {
   @ApiResponse({ status: 404, description: 'Trabajador no encontrado' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.trabajadoresService.remove(id);
+  }
+
+  @Post('import')
+  @Roles(UserRole.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Importar trabajadores desde Excel (Solo Admin)' })
+  @ApiResponse({ status: 200, description: 'Importación completada' })
+  @ApiResponse({ status: 400, description: 'Archivo inválido' })
+  async importExcel(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<BaseResponseDto<{ 
+    success: number; 
+    failed: number; 
+    errors: Array<{ row: number; dni: string; error: string }> 
+  }>> {
+    const result = await this.trabajadoresService.importFromExcel(file);
+    return new BaseResponseDto(
+      result,
+      `Importación completada: ${result.success} exitosos, ${result.failed} fallidos`,
+    );
   }
 }

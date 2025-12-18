@@ -3,8 +3,9 @@ import { TrabajadoresRepository } from '../repositories/trabajadores.repository'
 import { CreateTrabajadorDto } from '../dto/create-trabajador.dto';
 import { UpdateTrabajadorDto } from '../dto/update-trabajador.dto';
 import { TrabajadorResponseDto } from '../dto/trabajador-response.dto';
-import { EstadoCanasta, EstadoRegalos, AuditorioCanasta } from '../entities/trabajador.entity';
+import { EstadoCanasta, EstadoRegalos, AuditorioCanasta, AuditorioJuguetes } from '../entities/trabajador.entity';
 import { APP_CONSTANTS } from '../../../common/constants/app.constants';
+import { ImportTrabajadorRowDto } from '../dto/import-trabajadores.dto';
 
 @Injectable()
 export class TrabajadoresService {
@@ -125,5 +126,149 @@ export class TrabajadoresService {
     }
 
     await this.trabajadoresRepository.remove(id);
+  }
+
+  async importFromExcel(file: Express.Multer.File): Promise<{ 
+    success: number; 
+    failed: number; 
+    errors: Array<{ row: number; dni: string; error: string }> 
+  }> {
+    if (!file) {
+      throw new BadRequestException('No se proporcionó ningún archivo');
+    }
+
+    // Importar xlsx dinámicamente
+    const XLSX = await import('xlsx');
+    
+    let workbook: any;
+    try {
+      workbook = XLSX.read(file.buffer, { type: 'buffer' });
+    } catch (error) {
+      throw new BadRequestException('El archivo no es un Excel válido');
+    }
+
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      throw new BadRequestException('El archivo Excel está vacío');
+    }
+
+    const worksheet = workbook.Sheets[sheetName];
+    const rawData: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+    if (rawData.length === 0) {
+      throw new BadRequestException('El archivo no contiene datos');
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors: Array<{ row: number; dni: string; error: string }> = [];
+
+    // Procesar en lotes de 500
+    const BATCH_SIZE = 500;
+    
+    for (let i = 0; i < rawData.length; i += BATCH_SIZE) {
+      const batch = rawData.slice(i, i + BATCH_SIZE);
+      
+      for (let j = 0; j < batch.length; j++) {
+        const rowIndex = i + j + 2; // +2 porque Excel empieza en 1 y tiene header
+        const row = batch[j];
+
+        try {
+          // Mapear columnas del Excel a DTO
+          const trabajadorData: Partial<ImportTrabajadorRowDto> = {
+            dni: String(row['DNI'] || row['dni'] || '').trim(),
+            nombresCompletos: String(row['NOMBRES_COMPLETOS'] || row['Nombres Completos'] || row['nombresCompletos'] || '').trim(),
+            fechaIngreso: this.parseExcelDate(row['FECHA_INGRESO'] || row['Fecha Ingreso'] || row['fechaIngreso']),
+            funcion: String(row['FUNCION'] || row['Funcion'] || row['funcion'] || '').trim(),
+            tipoCanasta: String(row['TIPO_CANASTA'] || row['Tipo Canasta'] || row['tipoCanasta'] || '').trim(),
+            auditorioCanasta: this.parseAuditorioCanasta(row['AUDITORIO_CANASTA'] || row['Auditorio Canasta'] || row['auditorioCanasta']),
+            auditorioJuguetes: this.parseAuditorioJuguetes(row['AUDITORIO_JUGUETES'] || row['Auditorio Juguetes'] || row['auditorioJuguetes']),
+          };
+
+          // Validar datos básicos
+          if (!trabajadorData.dni || trabajadorData.dni.length < 8) {
+            throw new Error('DNI inválido o vacío');
+          }
+
+          if (!trabajadorData.nombresCompletos) {
+            throw new Error('Nombres completos requeridos');
+          }
+
+          if (!trabajadorData.fechaIngreso) {
+            throw new Error('Fecha de ingreso inválida');
+          }
+
+          // Verificar si ya existe
+          const exists = await this.trabajadoresRepository.findByDni(trabajadorData.dni);
+          if (exists) {
+            throw new Error('DNI duplicado');
+          }
+
+          // Crear el trabajador
+          await this.trabajadoresRepository.create({
+            ...trabajadorData,
+            fechaIngreso: new Date(trabajadorData.fechaIngreso),
+          } as any);
+
+          successCount++;
+        } catch (error: any) {
+          failedCount++;
+          errors.push({
+            row: rowIndex,
+            dni: String(row['DNI'] || row['dni'] || 'N/A'),
+            error: error.message || 'Error desconocido',
+          });
+        }
+      }
+    }
+
+    return { success: successCount, failed: failedCount, errors };
+  }
+
+  private parseExcelDate(value: any): string {
+    if (!value) return '';
+    
+    // Si es un número (Excel serial date)
+    if (typeof value === 'number') {
+      const date = new Date((value - 25569) * 86400 * 1000);
+      return date.toISOString().split('T')[0];
+    }
+    
+    // Si es string, intentar parsearlo
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().split('T')[0];
+      }
+    }
+    
+    return '';
+  }
+
+  private parseAuditorioCanasta(value: any): AuditorioCanasta {
+    const str = String(value || '').trim().toUpperCase();
+    
+    if (str === 'AUDITORIO_2' || str === 'AUDITORIO 2' || str === '2') {
+      return AuditorioCanasta.AUDITORIO_2;
+    }
+    if (str === 'AUDITORIO_3' || str === 'AUDITORIO 3' || str === '3') {
+      return AuditorioCanasta.AUDITORIO_3;
+    }
+    
+    throw new Error('Auditorio de canasta inválido (debe ser AUDITORIO_2 o AUDITORIO_3)');
+  }
+
+  private parseAuditorioJuguetes(value: any): AuditorioJuguetes | null {
+    if (!value || value === '' || value === 'N/A' || value === 'null') {
+      return null;
+    }
+    
+    const str = String(value).trim().toUpperCase();
+    
+    if (str === 'AUDITORIO_1' || str === 'AUDITORIO 1' || str === '1') {
+      return AuditorioJuguetes.AUDITORIO_1;
+    }
+    
+    return null;
   }
 }

@@ -21,17 +21,17 @@ export class CreateTrabajadorDto {
   @IsDateString()
   fechaIngreso: string;
 
-  @ApiProperty({ description: 'Función del trabajador', example: 'Operario de campo' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Función del trabajador', example: 'Operario de campo', nullable: true })
+  @IsOptional()
   @IsString()
   @MaxLength(100)
-  funcion: string;
+  funcion?: string | null;
 
-  @ApiProperty({ description: 'Tipo de canasta asignada', example: 'Canasta Tipo 1' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Tipo de canasta asignada', example: 'Canasta Tipo 1', nullable: true })
+  @IsOptional()
   @IsString()
   @MaxLength(50)
-  tipoCanasta: string;
+  tipoCanasta?: string | null;
 
   @ApiProperty({ 
     description: 'Auditorio asignado para entrega de canasta', 

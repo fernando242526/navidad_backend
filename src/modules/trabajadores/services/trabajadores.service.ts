@@ -177,6 +177,7 @@ export class TrabajadoresService {
           // Mapear columnas del Excel a DTO
           const trabajadorData: Partial<ImportTrabajadorRowDto> = {
             dni: String(row['DNI'] || row['dni'] || '').trim(),
+            correlativo: String(row['CORRELATIVO'] || row['correlativo'] || '').trim(),
             nombresCompletos: String(row['NOMBRES_COMPLETOS'] || row['Nombres Completos'] || row['nombresCompletos'] || '').trim(),
             fechaIngreso: this.parseExcelDate(row['FECHA_INGRESO'] || row['Fecha Ingreso'] || row['fechaIngreso']),
             funcion: String(row['FUNCION'] || row['Funcion'] || row['funcion'] || '').trim(),

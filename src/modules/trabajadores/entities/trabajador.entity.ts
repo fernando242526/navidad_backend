@@ -30,6 +30,9 @@ export class Trabajador extends BaseEntity {
   @Column({ type: 'varchar', length: 20, unique: true })
   dni: string;
 
+  @Column({ type: 'varchar', length: 255, name: 'correlativo' })
+  correlativo: string;
+
   @Column({ type: 'varchar', length: 255, name: 'nombres_completos' })
   nombresCompletos: string;
 

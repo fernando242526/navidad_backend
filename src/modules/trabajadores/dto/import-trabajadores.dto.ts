@@ -10,6 +10,11 @@ export class ImportTrabajadorRowDto {
 
   @IsNotEmpty()
   @IsString()
+  @MaxLength(20)
+  correlativo: string;
+
+  @IsNotEmpty()
+  @IsString()
   @MaxLength(255)
   nombresCompletos: string;
 

@@ -9,6 +9,9 @@ export class TrabajadorResponseDto {
   dni: string;
 
   @ApiProperty()
+  correlativo: string;
+
+  @ApiProperty()
   nombresCompletos: string;
 
   @ApiProperty()

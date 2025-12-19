@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
-export class InitialSchema1734468000000 implements MigrationInterface {
-  name = 'InitialSchema1734468000000';
+export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
+  name = 'InitialSchemaUpdated1734650000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ==================== TABLA: users ====================
@@ -66,10 +66,13 @@ export class InitialSchema1734468000000 implements MigrationInterface {
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         "dni" character varying(20) NOT NULL,
+        "correlativo" character varying(255) NOT NULL,
         "nombres_completos" character varying(255) NOT NULL,
         "fecha_ingreso" date NOT NULL,
-        "funcion" character varying(100) NOT NULL,
-        "tipo_canasta" character varying(50) NOT NULL,
+        "funcion" character varying(100),
+        "tipo_canasta" character varying(50),
+        "tipo_juguete" character varying(255),
+        "hijos" integer,
         "estado_canasta" "public"."trabajadores_estado_canasta_enum" NOT NULL DEFAULT 'PENDIENTE',
         "estado_regalos" "public"."trabajadores_estado_regalos_enum" NOT NULL DEFAULT 'PENDIENTE',
         "auditorio_canasta" "public"."trabajadores_auditorio_canasta_enum" NOT NULL,

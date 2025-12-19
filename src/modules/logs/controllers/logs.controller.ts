@@ -21,6 +21,7 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { UserRole } from '../../../common/constants/roles.enum';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { TrabajadorFlujoResponseDto } from '../dto/trabajador-flujo-response.dto';
 
 @ApiTags('Logs')
 @Controller('logs')
@@ -79,6 +80,18 @@ export class LogsController {
   ): Promise<BaseResponseDto<LogResponseDto[]>> {
     const logs = await this.logsService.findByTrabajadorId(idTrabajador);
     return new BaseResponseDto(logs, 'Logs del trabajador obtenidos exitosamente');
+  }
+
+  @Get('trabajador/:idTrabajador/flujo')
+  @Roles(UserRole.ADMIN, UserRole.LIDER_PROCESO)
+  @ApiOperation({ summary: 'Obtener flujo completo del trabajador con resumen' })
+  @ApiResponse({ status: 200, description: 'Flujo del trabajador obtenido exitosamente' })
+  @ApiResponse({ status: 404, description: 'Trabajador no encontrado' })
+  async findTrabajadorFlujo(
+    @Param('idTrabajador', ParseUUIDPipe) idTrabajador: string,
+  ): Promise<BaseResponseDto<TrabajadorFlujoResponseDto>> {
+    const flujo = await this.logsService.findTrabajadorFlujo(idTrabajador);
+    return new BaseResponseDto(flujo, 'Flujo del trabajador obtenido exitosamente');
   }
 
   @Get('usuario/:idUsuario')

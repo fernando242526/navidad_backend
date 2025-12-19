@@ -7,6 +7,7 @@ import { TrabajadoresRepository } from '../../trabajadores/repositories/trabajad
 import { UsersRepository } from '../../users/repositories/users.repository';
 import { TrabajadorResponseDto } from '../../trabajadores/dto/trabajador-response.dto';
 import { UserResponseDto } from '../../users/dto/user-response.dto';
+import { TrabajadorFlujoResponseDto } from '../dto/trabajador-flujo-response.dto';
 
 @Injectable()
 export class LogsService {
@@ -148,5 +149,71 @@ export class LogsService {
     }
 
     await this.logsRepository.remove(id);
+  }
+
+  /**
+   * Obtener flujo completo del trabajador con resumen
+   */
+  async findTrabajadorFlujo(idTrabajador: string): Promise<TrabajadorFlujoResponseDto> {
+    if (!idTrabajador) {
+      throw new BadRequestException('Trabajador ID is required');
+    }
+
+    // Obtener trabajador
+    const trabajador = await this.trabajadoresRepository.findOne(idTrabajador);
+    if (!trabajador) {
+      throw new NotFoundException('Trabajador not found');
+    }
+
+    // Obtener todos los logs
+    const logs = await this.logsRepository.findByTrabajadorId(idTrabajador);
+
+    // Transformar logs a DTOs
+    const logDtos = logs.map(log => {
+      const dto = new LogResponseDto(log);
+      if (log.usuario) {
+        dto.usuario = new UserResponseDto(log.usuario);
+      }
+      return dto;
+    });
+
+    // Calcular resumen
+    const usuariosMap = new Map<string, { 
+      id: string; 
+      nombreCompleto: string; 
+      rol: string; 
+      cantidadAcciones: number 
+    }>();
+
+    logDtos.forEach(log => {
+      if (log.usuario) {
+        const key = log.usuario.id;
+        if (usuariosMap.has(key)) {
+          usuariosMap.get(key)!.cantidadAcciones++;
+        } else {
+          usuariosMap.set(key, {
+            id: log.usuario.id,
+            nombreCompleto: `${log.usuario.firstName} ${log.usuario.lastName}`,
+            rol: log.usuario.role,
+            cantidadAcciones: 1,
+          });
+        }
+      }
+    });
+
+    const resumen = {
+      totalLogs: logDtos.length,
+      primeraAccion: logDtos.length > 0 ? logDtos[logDtos.length - 1].fechaHora : null,
+      ultimaAccion: logDtos.length > 0 ? logDtos[0].fechaHora : null,
+      estadoCanasta: trabajador.estadoCanasta,
+      estadoRegalos: trabajador.estadoRegalos,
+      usuariosInvolucrados: Array.from(usuariosMap.values()).sort((a, b) => b.cantidadAcciones - a.cantidadAcciones),
+    };
+
+    return new TrabajadorFlujoResponseDto({
+      trabajador: new TrabajadorResponseDto(trabajador),
+      logs: logDtos,
+      resumen,
+    });
   }
 }

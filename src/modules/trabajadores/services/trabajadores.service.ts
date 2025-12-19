@@ -270,5 +270,69 @@ export class TrabajadoresService {
     }
     
     return null;
+  } 
+
+  /**
+   * Exportar todos los trabajadores a Excel
+   */
+  async exportToExcel(): Promise<Buffer> {
+    // Obtener TODOS los trabajadores sin paginación
+    const { trabajadores } = await this.trabajadoresRepository.findAll(
+      1, 
+      999999, // Límite muy alto para obtener todos
+    );
+
+    if (trabajadores.length === 0) {
+      throw new BadRequestException('No hay trabajadores para exportar');
+    }
+
+    // Importar xlsx dinámicamente
+    const XLSX = await import('xlsx');
+
+    // Preparar datos para Excel con encabezados en MAYÚSCULAS
+    const excelData = trabajadores.map((trabajador) => ({
+      'DNI': trabajador.dni,
+      'NOMBRES_COMPLETOS': trabajador.nombresCompletos,
+      'FECHA_INGRESO': trabajador.fechaIngreso 
+        ? new Date(trabajador.fechaIngreso).toISOString().split('T')[0] 
+        : '',
+      'FUNCION': trabajador.funcion || '',
+      'TIPO_CANASTA': trabajador.tipoCanasta || '',
+      'ESTADO_CANASTA': trabajador.estadoCanasta,
+      'ESTADO_REGALOS': trabajador.estadoRegalos,
+      'AUDITORIO_CANASTA': trabajador.auditorioCanasta,
+      'AUDITORIO_JUGUETES': trabajador.auditorioJuguetes || '',
+      'FECHA_HORA_ENTREGA_CANASTA': trabajador.fechaHoraEntregaCanasta 
+        ? new Date(trabajador.fechaHoraEntregaCanasta).toISOString() 
+        : '',
+      'FECHA_HORA_ENTREGA_JUGUETES': trabajador.fechaHoraEntregaJuguetes 
+        ? new Date(trabajador.fechaHoraEntregaJuguetes).toISOString() 
+        : '',
+    }));
+
+    // Crear workbook y worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Trabajadores');
+
+    // Ajustar ancho de columnas
+    const columnWidths = [
+      { wch: 12 },  // DNI
+      { wch: 35 },  // NOMBRES_COMPLETOS
+      { wch: 15 },  // FECHA_INGRESO
+      { wch: 25 },  // FUNCION
+      { wch: 20 },  // TIPO_CANASTA
+      { wch: 20 },  // ESTADO_CANASTA
+      { wch: 20 },  // ESTADO_REGALOS
+      { wch: 20 },  // AUDITORIO_CANASTA
+      { wch: 20 },  // AUDITORIO_JUGUETES
+      { wch: 25 },  // FECHA_HORA_ENTREGA_CANASTA
+      { wch: 25 },  // FECHA_HORA_ENTREGA_JUGUETES
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Generar buffer
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    return buffer;
   }
 }

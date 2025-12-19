@@ -13,7 +13,9 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { TrabajadoresService } from '../services/trabajadores.service';
 import { CreateTrabajadorDto } from '../dto/create-trabajador.dto';
@@ -146,5 +148,17 @@ export class TrabajadoresController {
       result,
       `Importación completada: ${result.success} exitosos, ${result.failed} fallidos`,
     );
+  }
+
+  @Get('export/excel')
+  @Roles(UserRole.ADMIN, UserRole.LIDER_PROCESO)
+  @ApiOperation({ summary: 'Exportar todos los trabajadores a Excel (Admin y Líder)' })
+  @ApiResponse({ status: 200, description: 'Excel generado exitosamente' })
+  async exportToExcel(@Res() res: Response): Promise<void> {
+    const buffer = await this.trabajadoresService.exportToExcel();
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=trabajadores_${new Date().toISOString().split('T')[0]}.xlsx`);
+    res.send(buffer);
   }
 }

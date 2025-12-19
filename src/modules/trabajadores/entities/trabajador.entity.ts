@@ -45,6 +45,12 @@ export class Trabajador extends BaseEntity {
   @Column({ type: 'varchar', length: 50, name: 'tipo_canasta', nullable: true })
   tipoCanasta: string | null;
 
+  @Column({ type: 'varchar', length: 255, name: 'tipo_juguete', nullable: true })
+  tipoJuguete: string | null;
+
+  @Column({ type: 'int', name: 'hijos', nullable: true })
+  hijos: number | null;
+
   @Column({
     type: 'enum',
     enum: EstadoCanasta,

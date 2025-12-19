@@ -182,6 +182,8 @@ export class TrabajadoresService {
             fechaIngreso: this.parseExcelDate(row['FECHA_INGRESO'] || row['Fecha Ingreso'] || row['fechaIngreso']),
             funcion: String(row['FUNCION'] || row['Funcion'] || row['funcion'] || '').trim(),
             tipoCanasta: String(row['TIPO_CANASTA'] || row['Tipo Canasta'] || row['tipoCanasta'] || '').trim(),
+            tipoJuguete: String(row['TIPO_JUGUETE'] || row['Tipo Juguete'] || row['tipoJuguete'] || '').trim(),
+            hijos: Number(row['HIJOS'] ?? row['hijos'] ?? 0),
             auditorioCanasta: this.parseAuditorioCanasta(row['AUDITORIO_CANASTA'] || row['Auditorio Canasta'] || row['auditorioCanasta']),
             auditorioJuguetes: this.parseAuditorioJuguetes(row['AUDITORIO_JUGUETES'] || row['Auditorio Juguetes'] || row['auditorioJuguetes']),
           };
@@ -299,10 +301,12 @@ export class TrabajadoresService {
         : '',
       'FUNCION': trabajador.funcion || '',
       'TIPO_CANASTA': trabajador.tipoCanasta || '',
+      'TIPO_JUGUETE': trabajador.tipoCanasta || '',
       'ESTADO_CANASTA': trabajador.estadoCanasta,
       'ESTADO_REGALOS': trabajador.estadoRegalos,
       'AUDITORIO_CANASTA': trabajador.auditorioCanasta,
       'AUDITORIO_JUGUETES': trabajador.auditorioJuguetes || '',
+      'HIJOS': trabajador.hijos || 0,
       'FECHA_HORA_ENTREGA_CANASTA': trabajador.fechaHoraEntregaCanasta 
         ? new Date(trabajador.fechaHoraEntregaCanasta).toISOString() 
         : '',
@@ -323,10 +327,12 @@ export class TrabajadoresService {
       { wch: 15 },  // FECHA_INGRESO
       { wch: 25 },  // FUNCION
       { wch: 20 },  // TIPO_CANASTA
+      { wch: 30 },  // TIPO_JUGUETE
       { wch: 20 },  // ESTADO_CANASTA
       { wch: 20 },  // ESTADO_REGALOS
       { wch: 20 },  // AUDITORIO_CANASTA
       { wch: 20 },  // AUDITORIO_JUGUETES
+      { wch: 15 },  // HIJOS
       { wch: 25 },  // FECHA_HORA_ENTREGA_CANASTA
       { wch: 25 },  // FECHA_HORA_ENTREGA_JUGUETES
     ];

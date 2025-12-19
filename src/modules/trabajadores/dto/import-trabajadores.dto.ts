@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDateString, MaxLength, MinLength, IsEnum, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, MaxLength, MinLength, IsEnum, IsOptional, IsInt, Min } from 'class-validator';
 import { AuditorioCanasta, AuditorioJuguetes } from '../entities/trabajador.entity';
 
 export class ImportTrabajadorRowDto {
@@ -31,6 +31,16 @@ export class ImportTrabajadorRowDto {
   @IsString()
   @MaxLength(50)
   tipoCanasta?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  tipoJuguete?: string | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0) 
+  hijos?: number | null;
 
   @IsNotEmpty()
   @IsEnum(AuditorioCanasta)

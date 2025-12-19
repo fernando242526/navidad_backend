@@ -23,6 +23,9 @@ export class TrabajadorResponseDto {
   @ApiPropertyOptional({ nullable: true })
   tipoCanasta: string | null;
 
+  @ApiPropertyOptional({ nullable: true })
+  tipoJuguete: string | null;
+
   @ApiProperty({ enum: EstadoCanasta })
   estadoCanasta: EstadoCanasta;
 
@@ -37,6 +40,9 @@ export class TrabajadorResponseDto {
 
   @ApiPropertyOptional({ nullable: true })
   idCanasta: string | null;
+
+  @ApiPropertyOptional()
+  hijos: number | null;
 
   @ApiPropertyOptional({ nullable: true })
   fechaHoraEntregaCanasta: Date | null;

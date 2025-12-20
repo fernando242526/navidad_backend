@@ -73,11 +73,18 @@ export class FlujoService {
         };
       }
 
-      // Actualizar estados
-      const trabajadorActualizado = await this.trabajadoresRepository.update(trabajador.id, {
+      // Preparar datos de actualización
+      const updateData: any = {
         estadoCanasta: EstadoCanasta.VENTANILLA_ESCANEADO,
-        estadoRegalos: EstadoRegalos.VENTANILLA_ESCANEADO,
-      });
+      };
+
+      // Solo actualizar estadoRegalos si NO es NO_RECIBE
+      if (trabajador.estadoRegalos !== EstadoRegalos.NO_RECIBE) {
+        updateData.estadoRegalos = EstadoRegalos.VENTANILLA_ESCANEADO;
+      }
+
+      // Actualizar estados
+      const trabajadorActualizado = await this.trabajadoresRepository.update(trabajador.id, updateData);
 
       // Guardar log
       await this.logsRepository.create({

@@ -183,6 +183,7 @@ export class TrabajadoresService {
             funcion: String(row['FUNCION'] || row['Funcion'] || row['funcion'] || '').trim(),
             tipoCanasta: String(row['TIPO_CANASTA'] || row['Tipo Canasta'] || row['tipoCanasta'] || '').trim(),
             tipoJuguete: String(row['TIPO_JUGUETE'] || row['Tipo Juguete'] || row['tipoJuguete'] || '').trim(),
+            estadoRegalos: this.parseEstadoRegalos(row['ESTADO_REGALO'] || row['Estado Regalo'] || row['estadoRegalo']),
             hijos: Number(row['HIJOS'] ?? row['hijos'] ?? 0),
             auditorioCanasta: this.parseAuditorioCanasta(row['AUDITORIO_CANASTA'] || row['Auditorio Canasta'] || row['auditorioCanasta']),
             auditorioJuguetes: this.parseAuditorioJuguetes(row['AUDITORIO_JUGUETES'] || row['Auditorio Juguetes'] || row['auditorioJuguetes']),
@@ -259,6 +260,19 @@ export class TrabajadoresService {
     }
     
     throw new Error('Auditorio de canasta inválido (debe ser AUDITORIO_2 o AUDITORIO_3)');
+  }
+
+  private parseEstadoRegalos(value: any): EstadoRegalos {
+    const str = String(value || '').trim().toUpperCase();
+    
+    if (str === 'NO_RECIBE' || str === 'NO RECIBE') {
+      return EstadoRegalos.NO_RECIBE;
+    }
+    if (str === 'PENDIENTE') {
+      return EstadoRegalos.PENDIENTE;
+    }
+    
+    throw new Error('Estado de regalos inválido (debe ser NO_RECIBE o PENDIENTE)');
   }
 
   private parseAuditorioJuguetes(value: any): AuditorioJuguetes | null {

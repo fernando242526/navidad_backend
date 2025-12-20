@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, IsDateString, MaxLength, MinLength, IsEnum, IsOptional, IsInt, Min } from 'class-validator';
-import { AuditorioCanasta, AuditorioJuguetes } from '../entities/trabajador.entity';
+import { AuditorioCanasta, AuditorioJuguetes, EstadoCanasta, EstadoRegalos } from '../entities/trabajador.entity';
 
 export class ImportTrabajadorRowDto {
   @IsNotEmpty()
@@ -41,6 +41,10 @@ export class ImportTrabajadorRowDto {
   @IsInt()
   @Min(0) 
   hijos?: number | null;
+
+  @IsNotEmpty()
+  @IsEnum(EstadoRegalos)
+  estadoRegalos: EstadoRegalos;
 
   @IsNotEmpty()
   @IsEnum(AuditorioCanasta)

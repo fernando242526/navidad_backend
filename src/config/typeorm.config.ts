@@ -11,6 +11,7 @@ export default new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
   ssl: sslConfig,
+  schema: 'public',
   entities: [
     isDevelopment 
       ? 'src/**/*.entity{.ts,.js}' 

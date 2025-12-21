@@ -6,11 +6,16 @@ import { TrabajadorResponseDto } from '../dto/trabajador-response.dto';
 import { EstadoCanasta, EstadoRegalos, AuditorioCanasta, AuditorioJuguetes } from '../entities/trabajador.entity';
 import { APP_CONSTANTS } from '../../../common/constants/app.constants';
 import { ImportTrabajadorRowDto } from '../dto/import-trabajadores.dto';
+import { RegistrarObservacionDto } from '../dto/registrar-observacion.dto';
+import { LogsRepository } from 'src/modules/logs/repositories/logs.repository';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class TrabajadoresService {
   constructor(
     private readonly trabajadoresRepository: TrabajadoresRepository,
+    private readonly logsRepository: LogsRepository,
+  private readonly dataSource: DataSource,
   ) {}
 
   async create(createTrabajadorDto: CreateTrabajadorDto): Promise<TrabajadorResponseDto> {
@@ -327,6 +332,10 @@ export class TrabajadoresService {
       'FECHA_HORA_ENTREGA_JUGUETES': trabajador.fechaHoraEntregaJuguetes 
         ? new Date(trabajador.fechaHoraEntregaJuguetes).toISOString() 
         : '',
+      'OBSERVACION': trabajador.observacion || '',
+      'FECHA_OBSERVACION': trabajador.fechaObservacion 
+        ? new Date(trabajador.fechaObservacion).toISOString() 
+        : '',
     }));
 
     // Crear workbook y worksheet
@@ -349,11 +358,57 @@ export class TrabajadoresService {
       { wch: 15 },  // HIJOS
       { wch: 25 },  // FECHA_HORA_ENTREGA_CANASTA
       { wch: 25 },  // FECHA_HORA_ENTREGA_JUGUETES
+      { wch: 50 },  // OBSERVACION
+      { wch: 25 },  // FECHA_OBSERVACION
     ];
     worksheet['!cols'] = columnWidths;
 
     // Generar buffer
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
     return buffer;
+  }
+
+  async registrarObservacion(
+    id: string,
+    registrarObservacionDto: RegistrarObservacionDto,
+    idUsuario: string,
+  ): Promise<TrabajadorResponseDto> {
+    if (!id) {
+      throw new BadRequestException('Trabajador ID is required');
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const trabajador = await this.trabajadoresRepository.findOne(id);
+      if (!trabajador) {
+        throw new NotFoundException('Trabajador not found');
+      }
+
+      // Actualizar observación
+      const trabajadorActualizado = await this.trabajadoresRepository.update(id, {
+        observacion: registrarObservacionDto.observacion,
+        fechaObservacion: new Date(),
+      });
+
+      // Registrar en logs
+      await this.logsRepository.create({
+        idTrabajador: id,
+        idUsuario,
+        peticionHecha: `PATCH /trabajadores/${id}/observacion - Observación: ${registrarObservacionDto.observacion.substring(0, 100)}...`,
+        fechaHora: new Date(),
+      });
+
+      await queryRunner.commitTransaction();
+
+      return new TrabajadorResponseDto(trabajadorActualizado!);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

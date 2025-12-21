@@ -91,4 +91,10 @@ export class Trabajador extends BaseEntity {
 
   @Column({ type: 'timestamp', nullable: true, name: 'fecha_hora_entrega_juguetes' })
   fechaHoraEntregaJuguetes: Date | null;
+
+  @Column({ type: 'text', nullable: true })
+  observacion: string | null;
+
+  @Column({ type: 'timestamp', nullable: true, name: 'fecha_observacion' })
+  fechaObservacion: Date | null;
 }

@@ -28,6 +28,8 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { UserRole } from '../../../common/constants/roles.enum';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { RegistrarObservacionDto } from '../dto/registrar-observacion.dto';
 
 @ApiTags('Trabajadores')
 @Controller('trabajadores')
@@ -160,5 +162,23 @@ export class TrabajadoresController {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=trabajadores_${new Date().toISOString().split('T')[0]}.xlsx`);
     res.send(buffer);
+  }
+
+  @Patch(':id/observacion')
+  @Roles(UserRole.ADMIN, UserRole.LIDER_PROCESO)
+  @ApiOperation({ summary: 'Registrar observación del trabajador (Admin y Líder)' })
+  @ApiResponse({ status: 200, description: 'Observación registrada exitosamente' })
+  @ApiResponse({ status: 404, description: 'Trabajador no encontrado' })
+  async registrarObservacion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() registrarObservacionDto: RegistrarObservacionDto,
+    @CurrentUser('id') idUsuario: string,
+  ): Promise<BaseResponseDto<TrabajadorResponseDto>> {
+    const trabajador = await this.trabajadoresService.registrarObservacion(
+      id, 
+      registrarObservacionDto, 
+      idUsuario
+    );
+    return new BaseResponseDto(trabajador, 'Observación registrada exitosamente');
   }
 }

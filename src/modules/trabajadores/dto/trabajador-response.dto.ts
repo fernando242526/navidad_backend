@@ -50,6 +50,12 @@ export class TrabajadorResponseDto {
   @ApiPropertyOptional({ nullable: true })
   fechaHoraEntregaJuguetes: Date | null;
 
+  @ApiPropertyOptional({ nullable: true })
+  observacion: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  fechaObservacion: Date | null;
+
   @ApiProperty()
   createdAt: Date;
 

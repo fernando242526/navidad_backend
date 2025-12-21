@@ -47,7 +47,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     await queryRunner.query(`
       DO $$ BEGIN
         CREATE TYPE "public"."trabajadores_estado_regalos_enum" AS ENUM(
-          'NO_RECIBE'
+          'NO_RECIBE',
           'PENDIENTE',
           'VENTANILLA_ESCANEADO',
           'AUDITORIO_INGRESADO',

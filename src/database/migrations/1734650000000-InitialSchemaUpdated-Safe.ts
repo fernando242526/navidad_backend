@@ -101,6 +101,8 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
         "id_canasta" uuid,
         "fecha_hora_entrega_canasta" TIMESTAMP,
         "fecha_hora_entrega_juguetes" TIMESTAMP,
+        "observacion" text,
+        "fecha_observacion" TIMESTAMP,
         CONSTRAINT "UQ_trabajadores_dni" UNIQUE ("dni"),
         CONSTRAINT "PK_trabajadores_id" PRIMARY KEY ("id")
       )

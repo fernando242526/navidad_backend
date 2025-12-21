@@ -21,7 +21,6 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
   if (useSSL) {
     logger.log('🔒 SSL enabled for database connection');
 
-    // Ruta fija del certificado en el proyecto
     const sslCertPath = path.resolve(process.cwd(), 'src/config/ssl/ca-certificate.crt');
 
     try {
@@ -31,9 +30,9 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
 
         sslConfig = {
           ssl: {
-            rejectUnauthorized: false, // Temporal para Digital Ocean
+            rejectUnauthorized: false,
             ca: ca,
-            checkServerIdentity: () => undefined, // Desactiva verificación de hostname
+            checkServerIdentity: () => undefined,
           },
           extra: {
             ssl: {
@@ -46,7 +45,6 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
       } else {
         logger.warn('⚠️  SSL certificate not found, using basic SSL configuration for Digital Ocean');
 
-        // Configuración SSL optimizada para Digital Ocean sin certificado
         sslConfig = {
           ssl: {
             rejectUnauthorized: false,
@@ -69,7 +67,6 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
 
       logger.warn('📋 Using basic SSL configuration as fallback');
 
-      // Fallback optimizado para Digital Ocean
       sslConfig = {
         ssl: {
           rejectUnauthorized: false,
@@ -94,9 +91,10 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
   // Configuración base común
   const baseConfig: Partial<TypeOrmModuleOptions> = {
     type: 'postgres',
+    schema: 'public', // 🔥 AGREGAR ESTA LÍNEA
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
-    synchronize: !isProduction, // Solo en desarrollo
+    synchronize: !isProduction,
     logging: !isProduction,
     autoLoadEntities: true,
     ...sslConfig,
@@ -121,7 +119,6 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
   const password = configService.get<string>('DATABASE_PASSWORD');
   const database = configService.get<string>('DATABASE_NAME');
 
-  // Validaciones para desarrollo
   if (!host || !port || !username || !password || !database) {
     throw new Error(`
       ❌ Database configuration incomplete for individual parameters mode.

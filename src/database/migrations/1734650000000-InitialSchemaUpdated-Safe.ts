@@ -5,6 +5,9 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
   name = 'InitialSchemaUpdated1734650000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // ==================== HABILITAR EXTENSIÓN UUID ====================
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+
     // ==================== TABLA: users ====================
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "public"."users" (

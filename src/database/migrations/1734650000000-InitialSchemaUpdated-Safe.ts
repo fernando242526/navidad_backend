@@ -7,7 +7,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ==================== TABLA: users ====================
     await queryRunner.query(`
-      CREATE TABLE IF NOT EXISTS "users" (
+      CREATE TABLE IF NOT EXISTS "public"."users" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -25,7 +25,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_users_email" ON "users" ("email")
+      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_users_email" ON "public"."users" ("email")
     `);
 
     // ==================== CREAR TIPOS ENUM (solo si no existen) ====================
@@ -83,7 +83,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
 
     // ==================== TABLA: trabajadores ====================
     await queryRunner.query(`
-      CREATE TABLE IF NOT EXISTS "trabajadores" (
+      CREATE TABLE IF NOT EXISTS "public"."trabajadores" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -110,12 +110,12 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_trabajadores_dni" ON "trabajadores" ("dni")
+      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_trabajadores_dni" ON "public"."trabajadores" ("dni")
     `);
 
     // ==================== TABLA: canastas ====================
     await queryRunner.query(`
-      CREATE TABLE IF NOT EXISTS "canastas" (
+      CREATE TABLE IF NOT EXISTS "public"."canastas" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -126,12 +126,12 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_canastas_codigo_qr" ON "canastas" ("codigo_qr")
+      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_canastas_codigo_qr" ON "public"."canastas" ("codigo_qr")
     `);
 
     // ==================== TABLA: regalos ====================
     await queryRunner.query(`
-      CREATE TABLE IF NOT EXISTS "regalos" (
+      CREATE TABLE IF NOT EXISTS "public"."regalos" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -142,12 +142,12 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_regalos_codigo_qr" ON "regalos" ("codigo_qr")
+      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_regalos_codigo_qr" ON "public"."regalos" ("codigo_qr")
     `);
 
     // ==================== TABLA: trabajador_regalos ====================
     await queryRunner.query(`
-      CREATE TABLE IF NOT EXISTS "trabajador_regalos" (
+      CREATE TABLE IF NOT EXISTS "public"."trabajador_regalos" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -160,10 +160,10 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     // Agregar foreign keys solo si no existen
     await queryRunner.query(`
       DO $$ BEGIN
-        ALTER TABLE "trabajador_regalos" 
+        ALTER TABLE "public"."trabajador_regalos" 
           ADD CONSTRAINT "FK_trabajador_regalos_trabajador" 
           FOREIGN KEY ("id_trabajador") 
-          REFERENCES "trabajadores"("id") 
+          REFERENCES "public"."trabajadores"("id") 
           ON DELETE CASCADE;
       EXCEPTION
         WHEN duplicate_object THEN null;
@@ -172,10 +172,10 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
 
     await queryRunner.query(`
       DO $$ BEGIN
-        ALTER TABLE "trabajador_regalos" 
+        ALTER TABLE "public"."trabajador_regalos" 
           ADD CONSTRAINT "FK_trabajador_regalos_regalo" 
           FOREIGN KEY ("id_regalo") 
-          REFERENCES "regalos"("id") 
+          REFERENCES "public"."regalos"("id") 
           ON DELETE CASCADE;
       EXCEPTION
         WHEN duplicate_object THEN null;
@@ -184,12 +184,12 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
 
     await queryRunner.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS "IDX_trabajador_regalos_trabajador_regalo" 
-      ON "trabajador_regalos" ("id_trabajador", "id_regalo")
+      ON "public"."trabajador_regalos" ("id_trabajador", "id_regalo")
     `);
 
     // ==================== TABLA: logs ====================
     await queryRunner.query(`
-      CREATE TABLE IF NOT EXISTS "logs" (
+      CREATE TABLE IF NOT EXISTS "public"."logs" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "id_trabajador" uuid NOT NULL,
@@ -203,10 +203,10 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     // Agregar foreign keys solo si no existen
     await queryRunner.query(`
       DO $$ BEGIN
-        ALTER TABLE "logs" 
+        ALTER TABLE "public"."logs" 
           ADD CONSTRAINT "FK_logs_trabajador" 
           FOREIGN KEY ("id_trabajador") 
-          REFERENCES "trabajadores"("id") 
+          REFERENCES "public"."trabajadores"("id") 
           ON DELETE CASCADE;
       EXCEPTION
         WHEN duplicate_object THEN null;
@@ -215,10 +215,10 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
 
     await queryRunner.query(`
       DO $$ BEGIN
-        ALTER TABLE "logs" 
+        ALTER TABLE "public"."logs" 
           ADD CONSTRAINT "FK_logs_usuario" 
           FOREIGN KEY ("id_usuario") 
-          REFERENCES "users"("id") 
+          REFERENCES "public"."users"("id") 
           ON DELETE CASCADE;
       EXCEPTION
         WHEN duplicate_object THEN null;
@@ -226,15 +226,15 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE INDEX IF NOT EXISTS "IDX_logs_trabajador" ON "logs" ("id_trabajador")
+      CREATE INDEX IF NOT EXISTS "IDX_logs_trabajador" ON "public"."logs" ("id_trabajador")
     `);
 
     await queryRunner.query(`
-      CREATE INDEX IF NOT EXISTS "IDX_logs_usuario" ON "logs" ("id_usuario")
+      CREATE INDEX IF NOT EXISTS "IDX_logs_usuario" ON "public"."logs" ("id_usuario")
     `);
 
     await queryRunner.query(`
-      CREATE INDEX IF NOT EXISTS "IDX_logs_fecha_hora" ON "logs" ("fecha_hora")
+      CREATE INDEX IF NOT EXISTS "IDX_logs_fecha_hora" ON "public"."logs" ("fecha_hora")
     `);
 
     // ==================== CREAR USUARIO ADMIN (solo si no existe) ====================
@@ -244,13 +244,13 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
 
     // Verificar si ya existe el admin
     const existingAdmin = await queryRunner.query(
-      `SELECT id FROM "users" WHERE email = $1`,
+      `SELECT id FROM "public"."users" WHERE email = $1`,
       [adminEmail]
     );
 
     if (existingAdmin.length === 0) {
       await queryRunner.query(`
-        INSERT INTO "users" 
+        INSERT INTO "public"."users" 
           ("first_name", "last_name", "email", "password", "role", "is_active")
         VALUES 
           ('Admin', 'El Pedregal', $1, $2, 'ADMIN', true)
@@ -269,28 +269,28 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Eliminar tablas en orden inverso (respetando foreign keys)
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_logs_fecha_hora"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_logs_usuario"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_logs_trabajador"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "logs"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_logs_fecha_hora"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_logs_usuario"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_logs_trabajador"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "public"."logs"`);
 
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trabajador_regalos_trabajador_regalo"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "trabajador_regalos"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_trabajador_regalos_trabajador_regalo"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "public"."trabajador_regalos"`);
 
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_regalos_codigo_qr"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "regalos"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_regalos_codigo_qr"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "public"."regalos"`);
 
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_canastas_codigo_qr"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "canastas"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_canastas_codigo_qr"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "public"."canastas"`);
 
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_trabajadores_dni"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "trabajadores"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_trabajadores_dni"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "public"."trabajadores"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."trabajadores_auditorio_juguetes_enum"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."trabajadores_auditorio_canasta_enum"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."trabajadores_estado_regalos_enum"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."trabajadores_estado_canasta_enum"`);
 
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_users_email"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_users_email"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "public"."users"`);
   }
 }

@@ -5,13 +5,10 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
   name = 'InitialSchemaUpdated1734650000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // ==================== HABILITAR EXTENSIÓN UUID ====================
-    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
-
     // ==================== TABLA: users ====================
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "public"."users" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         "first_name" character varying(100) NOT NULL,
@@ -87,7 +84,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     // ==================== TABLA: trabajadores ====================
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "public"."trabajadores" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         "dni" character varying(20) NOT NULL,
@@ -119,7 +116,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     // ==================== TABLA: canastas ====================
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "public"."canastas" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         "codigo_qr" character varying(255) NOT NULL,
@@ -135,7 +132,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     // ==================== TABLA: regalos ====================
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "public"."regalos" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         "codigo_qr" character varying(255) NOT NULL,
@@ -151,7 +148,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     // ==================== TABLA: trabajador_regalos ====================
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "public"."trabajador_regalos" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         "id_trabajador" uuid NOT NULL,
@@ -193,7 +190,7 @@ export class InitialSchemaUpdated1734650000000 implements MigrationInterface {
     // ==================== TABLA: logs ====================
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "public"."logs" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "id_trabajador" uuid NOT NULL,
         "id_usuario" uuid NOT NULL,

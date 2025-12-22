@@ -30,6 +30,8 @@ import { UserRole } from '../../../common/constants/roles.enum';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RegistrarObservacionDto } from '../dto/registrar-observacion.dto';
+import { CanastasContadorResponseDto } from '../dto/canastas-contador-response.dto';
+import { RegalosContadorResponseDto } from '../dto/regalos-contador-response.dto';
 
 @ApiTags('Trabajadores')
 @Controller('trabajadores')
@@ -77,6 +79,24 @@ export class TrabajadoresController {
       limit,
       'Trabajadores obtenidos exitosamente',
     );
+  }
+
+  @Get('estadisticas/canastas-entregadas')
+  @Roles(UserRole.ADMIN, UserRole.LIDER_PROCESO)
+  @ApiOperation({ summary: 'Obtener contador de canastas entregadas por auditorio (Admin y Líder)' })
+  @ApiResponse({ status: 200, description: 'Estadísticas obtenidas exitosamente' })
+  async obtenerContadorCanastas(): Promise<BaseResponseDto<CanastasContadorResponseDto>> {
+    const contador = await this.trabajadoresService.obtenerContadorCanastas();
+    return new BaseResponseDto(contador, 'Estadísticas de canastas obtenidas exitosamente');
+  }
+
+  @Get('estadisticas/regalos-entregados')
+  @Roles(UserRole.ADMIN, UserRole.LIDER_PROCESO)
+  @ApiOperation({ summary: 'Obtener contador de regalos entregados (suma de hijos) (Admin y Líder)' })
+  @ApiResponse({ status: 200, description: 'Estadísticas obtenidas exitosamente' })
+  async obtenerContadorRegalos(): Promise<BaseResponseDto<RegalosContadorResponseDto>> {
+    const contador = await this.trabajadoresService.obtenerContadorRegalos();
+    return new BaseResponseDto(contador, 'Estadísticas de regalos obtenidas exitosamente');
   }
 
   @Get('dni/:dni')

@@ -111,4 +111,92 @@ export class RegalosService {
 
     await this.regalosRepository.remove(id);
   }
+
+  async importFromExcel(file: Express.Multer.File): Promise<{ 
+    success: number; 
+    failed: number; 
+    errors: Array<{ row: number; codigoQr: string; error: string }> 
+  }> {
+    if (!file) {
+      throw new BadRequestException('No se proporcionó ningún archivo');
+    }
+
+    // Importar xlsx dinámicamente
+    const XLSX = await import('xlsx');
+    
+    let workbook: any;
+    try {
+      workbook = XLSX.read(file.buffer, { type: 'buffer' });
+    } catch (error) {
+      throw new BadRequestException('El archivo no es un Excel válido');
+    }
+
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      throw new BadRequestException('El archivo Excel está vacío');
+    }
+
+    const worksheet = workbook.Sheets[sheetName];
+    const rawData: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+    if (rawData.length === 0) {
+      throw new BadRequestException('El archivo no contiene datos');
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors: Array<{ row: number; codigoQr: string; error: string }> = [];
+
+    // Procesar en lotes de 500
+    const BATCH_SIZE = 500;
+    
+    for (let i = 0; i < rawData.length; i += BATCH_SIZE) {
+      const batch = rawData.slice(i, i + BATCH_SIZE);
+      
+      for (let j = 0; j < batch.length; j++) {
+        const rowIndex = i + j + 2; // +2 porque Excel empieza en 1 y tiene header
+        const row = batch[j];
+
+        try {
+          // Obtener código QR (soporta diferentes formatos de columna)
+          const codigoQr = String(
+            row['CODIGO_QR'] || 
+            row['Codigo QR'] || 
+            row['codigoQr'] || 
+            ''
+          ).trim();
+
+          // Validar datos básicos
+          if (!codigoQr || codigoQr.length === 0) {
+            throw new Error('Código QR vacío o inválido');
+          }
+
+          // Verificar si ya existe
+          const exists = await this.regalosRepository.findByCodigoQr(codigoQr);
+          if (exists) {
+            throw new Error('Código QR duplicado');
+          }
+
+          // Crear el regalo
+          await this.regalosRepository.create({ codigoQr });
+
+          successCount++;
+        } catch (error: any) {
+          failedCount++;
+          errors.push({
+            row: rowIndex,
+            codigoQr: String(
+              row['CODIGO_QR'] || 
+              row['Codigo QR'] || 
+              row['codigoQr'] || 
+              'N/A'
+            ),
+            error: error.message || 'Error desconocido',
+          });
+        }
+      }
+    }
+
+    return { success: successCount, failed: failedCount, errors };
+  }
 }

@@ -11,6 +11,8 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { CanastasService } from '../services/canastas.service';
 import { CreateCanastaDto } from '../dto/create-canasta.dto';
@@ -23,6 +25,7 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { UserRole } from '../../../common/constants/roles.enum';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Canastas')
 @Controller('canastas')
@@ -42,6 +45,26 @@ export class CanastasController {
   ): Promise<BaseResponseDto<CanastaResponseDto>> {
     const canasta = await this.canastasService.create(createCanastaDto);
     return new BaseResponseDto(canasta, 'Canasta creada exitosamente', HttpStatus.CREATED);
+  }
+
+  @Post('import')
+  @Roles(UserRole.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Importar canastas desde Excel (Solo Admin)' })
+  @ApiResponse({ status: 200, description: 'Importación completada' })
+  @ApiResponse({ status: 400, description: 'Archivo inválido' })
+  async importExcel(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<BaseResponseDto<{ 
+    success: number; 
+    failed: number; 
+    errors: Array<{ row: number; codigoQr: string; error: string }> 
+  }>> {
+    const result = await this.canastasService.importFromExcel(file);
+    return new BaseResponseDto(
+      result,
+      `Importación completada: ${result.success} exitosos, ${result.failed} fallidos`,
+    );
   }
 
   @Get()

@@ -5,6 +5,8 @@ import {
   FindOptionsWhere,
   Like,
   EntityManager,
+  Not,
+  IsNull,
 } from 'typeorm';
 import {
   Trabajador,
@@ -179,5 +181,56 @@ export class TrabajadoresRepository {
       : this.repository;
 
     return repo.count({ where: { estadoRegalos } });
+  }
+
+  // =========================
+  // CONTADOR DE CANASTAS ENTREGADAS
+  // =========================
+  async contarCanastasEntregadasPorAuditorio(
+    manager?: EntityManager,
+  ): Promise<{ auditorio2: number; auditorio3: number }> {
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    const [auditorio2Count, auditorio3Count] = await Promise.all([
+      repo.count({
+        where: {
+          auditorioCanasta: AuditorioCanasta.AUDITORIO_2,
+          idCanasta: Not(IsNull()),
+        },
+      }),
+      repo.count({
+        where: {
+          auditorioCanasta: AuditorioCanasta.AUDITORIO_3,
+          idCanasta: Not(IsNull()),
+        },
+      }),
+    ]);
+
+    return {
+      auditorio2: auditorio2Count,
+      auditorio3: auditorio3Count,
+    };
+  }
+
+  // =========================
+  // CONTADOR DE REGALOS ENTREGADOS (SUMA DE HIJOS)
+  // =========================
+  async contarRegalosEntregados(
+    manager?: EntityManager,
+  ): Promise<number> {
+    const repo = manager
+      ? manager.getRepository(Trabajador)
+      : this.repository;
+
+    const result = await repo
+      .createQueryBuilder('trabajador')
+      .select('SUM(trabajador.hijos)', 'total')
+      .where('trabajador.fechaHoraEntregaJuguetes IS NOT NULL')
+      .andWhere('trabajador.hijos IS NOT NULL')
+      .getRawOne();
+
+    return result?.total ? parseInt(result.total, 10) : 0;
   }
 }

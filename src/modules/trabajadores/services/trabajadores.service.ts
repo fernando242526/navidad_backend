@@ -9,6 +9,8 @@ import { ImportTrabajadorRowDto } from '../dto/import-trabajadores.dto';
 import { RegistrarObservacionDto } from '../dto/registrar-observacion.dto';
 import { LogsRepository } from 'src/modules/logs/repositories/logs.repository';
 import { DataSource } from 'typeorm';
+import { CanastasContadorResponseDto } from '../dto/canastas-contador-response.dto';
+import { RegalosContadorResponseDto } from '../dto/regalos-contador-response.dto';
 
 @Injectable()
 export class TrabajadoresService {
@@ -410,5 +412,23 @@ export class TrabajadoresService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * Obtener contador de canastas entregadas por auditorio
+   */
+  async obtenerContadorCanastas(): Promise<CanastasContadorResponseDto> {
+    const { auditorio2, auditorio3 } = 
+      await this.trabajadoresRepository.contarCanastasEntregadasPorAuditorio();
+
+    return new CanastasContadorResponseDto(auditorio2, auditorio3);
+  }
+
+  /**
+   * Obtener contador de regalos entregados (suma de hijos)
+   */
+  async obtenerContadorRegalos(): Promise<RegalosContadorResponseDto> {
+    const totalRegalos = await this.trabajadoresRepository.contarRegalosEntregados();
+    return new RegalosContadorResponseDto(totalRegalos);
   }
 }
